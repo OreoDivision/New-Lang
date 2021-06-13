@@ -1,18 +1,18 @@
-#--------------------------------------
+#######################################
 # IMPORTS
-#--------------------------------------
+#######################################
 
 from strings_with_arrows import *
 
-#--------------------------------------
+#######################################
 # CONSTANTS
-#--------------------------------------
+#######################################
 
 DIGITS = '0123456789'
 
-#--------------------------------------
+#######################################
 # ERRORS
-#--------------------------------------
+#######################################
 
 class Error:
 	def __init__(self, pos_start, pos_end, error_name, details):
@@ -58,9 +58,9 @@ class RTError(Error):
 
 		return 'Traceback (most recent call last):\n' + result
 
-#--------------------------------------
+#######################################
 # POSITION
-#--------------------------------------
+#######################################
 
 class Position:
 	def __init__(self, idx, ln, col, fn, ftxt):
@@ -83,9 +83,9 @@ class Position:
 	def copy(self):
 		return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
 
-#--------------------------------------
+#######################################
 # TOKENS
-#--------------------------------------
+#######################################
 
 TT_INT			= 'INT'
 TT_FLOAT    = 'FLOAT'
@@ -114,9 +114,9 @@ class Token:
 		if self.value: return f'{self.type}:{self.value}'
 		return f'{self.type}'
 
-#--------------------------------------
+#######################################
 # LEXER
-#--------------------------------------
+#######################################
 
 class Lexer:
 	def __init__(self, fn, text):
@@ -184,9 +184,9 @@ class Lexer:
 		else:
 			return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
 
-#--------------------------------------
+#######################################
 # NODES
-#--------------------------------------
+#######################################
 
 class NumberNode:
 	def __init__(self, tok):
@@ -221,9 +221,9 @@ class UnaryOpNode:
 	def __repr__(self):
 		return f'({self.op_tok}, {self.node})'
 
-#--------------------------------------
+#######################################
 # PARSE RESULT
-#--------------------------------------
+#######################################
 
 class ParseResult:
 	def __init__(self):
@@ -245,9 +245,9 @@ class ParseResult:
 		self.error = error
 		return self
 
-#--------------------------------------
+#######################################
 # PARSER
-#--------------------------------------
+#######################################
 
 class Parser:
 	def __init__(self, tokens):
@@ -265,10 +265,12 @@ class Parser:
 		res = self.expr()
 		if not res.error and self.current_tok.type != TT_EOF:
 			return res.failure(InvalidSyntaxError(
-				self.current_tok.pos_start, self.current_tok.pos_end, "Expected '+', '-', '*' or '/'"))
+				self.current_tok.pos_start, self.current_tok.pos_end,
+				"Expected '+', '-', '*' or '/'"
+			))
 		return res
 
-	#--------------------------------------
+	###################################
 
 	def factor(self):
 		res = ParseResult()
@@ -293,10 +295,14 @@ class Parser:
 				return res.success(expr)
 			else:
 				return res.failure(InvalidSyntaxError(
-					self.current_tok.pos_start, self.current_tok.pos_end, "Expected ')'"))
+					self.current_tok.pos_start, self.current_tok.pos_end,
+					"Expected ')'"
+				))
 
 		return res.failure(InvalidSyntaxError(
-			tok.pos_start, tok.pos_end, "Expected int or float"))
+			tok.pos_start, tok.pos_end,
+			"Expected int or float"
+		))
 
 	def term(self):
 		return self.bin_op(self.factor, (TT_MUL, TT_DIV))
@@ -304,7 +310,7 @@ class Parser:
 	def expr(self):
 		return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
-	#--------------------------------------
+	###################################
 
 	def bin_op(self, func, ops):
 		res = ParseResult()
@@ -320,9 +326,9 @@ class Parser:
 
 		return res.success(left)
 
-#--------------------------------------
+#######################################
 # RUNTIME RESULT
-#--------------------------------------
+#######################################
 
 class RTResult:
 	def __init__(self):
@@ -341,9 +347,9 @@ class RTResult:
 		self.error = error
 		return self
 
-#--------------------------------------
+#######################################
 # VALUES
-#--------------------------------------
+#######################################
 
 class Number:
 	def __init__(self, value):
@@ -376,16 +382,19 @@ class Number:
 		if isinstance(other, Number):
 			if other.value == 0:
 				return None, RTError(
-					other.pos_start, other.pos_end, 'Division by zero', self.context)
+					other.pos_start, other.pos_end,
+					'Division by zero',
+					self.context
+				)
 
 			return Number(self.value / other.value).set_context(self.context), None
 
 	def __repr__(self):
 		return str(self.value)
 
-#--------------------------------------
+#######################################
 # CONTEXT
-#--------------------------------------
+#######################################
 
 class Context:
 	def __init__(self, display_name, parent=None, parent_entry_pos=None):
@@ -393,9 +402,9 @@ class Context:
 		self.parent = parent
 		self.parent_entry_pos = parent_entry_pos
 
-#--------------------------------------
+#######################################
 # INTERPRETER
-#--------------------------------------
+#######################################
 
 class Interpreter:
 	def visit(self, node, context):
@@ -406,7 +415,7 @@ class Interpreter:
 	def no_visit_method(self, node, context):
 		raise Exception(f'No visit_{type(node).__name__} method defined')
 
-	#--------------------------------------
+	###################################
 
 	def visit_NumberNode(self, node, context):
 		return RTResult().success(
@@ -449,9 +458,9 @@ class Interpreter:
 		else:
 			return res.success(number.set_pos(node.pos_start, node.pos_end))
 
-#--------------------------------------
+#######################################
 # RUN
-#--------------------------------------
+#######################################
 
 def run(fn, text):
 	# Generate tokens
